@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Analyze Base network tokens for honeypot indicators without external APIs. Direct blockchain analysis.">
+    <title>Base Honeypot Checker - On-Chain Analysis</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Using jsDelivr CDN for better reliability -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+</head>
+
+<body>
+    <div class="background-gradient"></div>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                    <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <h1>Base Honeypot Checker</h1>
+            </div>
+            <p class="tagline">On-chain analysis without external APIs</p>
+            <div class="network-badge">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                <span>Base Network</span>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="scanner-card glass-card">
+                <h2>Analyze Token Contract</h2>
+                <p class="card-description">Enter a Base network token address for direct on-chain analysis</p>
+
+                <div class="input-group">
+                    <label for="contract-address" class="input-label">Token Contract Address</label>
+                    <input type="text" id="contract-address" class="contract-input" placeholder="0x..."
+                        spellcheck="false">
+                </div>
+
+                <button id="scan-button" class="scan-button">
+                    <span class="button-text">Analyze Contract</span>
+                    <svg class="button-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+
+                <div id="loading-state" class="loading-state hidden">
+                    <div class="spinner"></div>
+                    <p id="loading-message">Connecting to Base network...</p>
+                </div>
+            </div>
+
+            <div id="results-container" class="results-container hidden">
+                <div class="results-card glass-card">
+                    <div class="results-header">
+                        <h2>Analysis Results</h2>
+                        <button id="close-results" class="close-button">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div id="risk-meter" class="risk-meter">
+                        <div class="risk-meter-header">
+                            <h3>Risk Assessment</h3>
+                            <span id="risk-badge" class="risk-badge"></span>
+                        </div>
+                        <div class="risk-meter-bar">
+                            <div id="risk-fill" class="risk-fill"></div>
+                        </div>
+                        <div class="risk-score-text">
+                            <span>Risk Score: <strong id="risk-score-value">0</strong>/100</span>
+                        </div>
+                    </div>
+
+                    <div id="token-info" class="token-info">
+                        <h3>Token Information</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Name</span>
+                                <span id="token-name" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Symbol</span>
+                                <span id="token-symbol" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Decimals</span>
+                                <span id="token-decimals" class="info-value">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Total Supply</span>
+                                <span id="token-supply" class="info-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="analysis-details" class="analysis-details">
+                        <h3>Security Checks</h3>
+                        <div id="details-list" class="details-list"></div>
+                    </div>
+
+                    <div class="results-footer">
+                        <a id="explorer-link" class="explorer-link" target="_blank" rel="noopener noreferrer">
+                            View on BaseScan
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M18 13V19C18 19.5304 17.7893 20.0391 17.4142 20.4142C17.0391 20.7893 16.5304 21 16 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V8C3 7.46957 3.21071 6.96086 3.58579 6.58579C3.96086 6.21071 4.46957 6 5 6H11M15 3H21M21 3V9M21 3L10 14"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div id="error-container" class="error-container hidden">
+                <div class="error-card glass-card">
+                    <div class="error-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h3>Analysis Failed</h3>
+                    <p id="error-message"></p>
+                    <button id="close-error" class="retry-button">Try Again</button>
+                </div>
+            </div>
+
+            <div class="info-section glass-card">
+                <h3>How It Works</h3>
+                <div class="info-grid-features">
+                    <div class="feature-item">
+                        <div class="feature-icon">🔗</div>
+                        <h4>Direct RPC Connection</h4>
+                        <p>Connects directly to Base network RPC</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🔍</div>
+                        <h4>Bytecode Analysis</h4>
+                        <p>Analyzes contract code for suspicious patterns</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">⚡</div>
+                        <h4>Transaction Simulation</h4>
+                        <p>Simulates buy/sell to detect restrictions</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🛡️</div>
+                        <h4>No External APIs</h4>
+                        <p>100% on-chain verification</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>⚠️ This tool provides indicators only. Always DYOR before investing.</p>
+            <p class="footer-note">Powered by ethers.js • Base Network</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
